@@ -45,10 +45,12 @@ namespace Double_trasposition2
             this.length = text.Length;
             double root= Math.Sqrt(length);
             this.m = this.n = (int)root;
-            if(root%1!=0)
+            if(root%1!=0)   //root nije ceo broj
             {
-                this.n++;
-                if (root < System.Convert.ToInt32(root))
+                this.n++;   //potrebna jos jedna vrsta
+                // if (root < System.Convert.ToInt32(root))    //drugi nacin
+                //   this.m++;
+                if (this.n * this.m < this.length)   //potrebna jos jedna kolona
                     this.m++;
             }
         }

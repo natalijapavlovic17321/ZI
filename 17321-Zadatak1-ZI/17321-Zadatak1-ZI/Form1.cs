@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Double_trasposition2;
 using System.IO;
+using _17321_Zadatak1_ZI.BlowFish2;
+using System.Security.Cryptography;
 
 namespace _17321_Zadatak1_ZI
 {
@@ -23,9 +25,36 @@ namespace _17321_Zadatak1_ZI
             if (checkBox1.Checked)
             {
                 {
-                    string destination = textBox3.Text;
-                    Code(e.FullPath, e.Name, destination);
+                    if (!IsFileReady(e.FullPath))
+                    { }
+                    else
+                    {
+                        string destination = textBox3.Text;
+                        SelectAlgorithm(e.FullPath, e.Name, destination);
+                    }
+                    }
                 }
+        }
+        public void SelectAlgorithm(string source, string name, string destination)
+        {
+            if (radioButton1.Checked == true)
+            {
+                CodeDT(source, name, destination);
+            }
+            else if (radioButton2.Checked == true)
+            {
+                CodeBF(source, name, destination);
+            }
+        }
+        public void SelectAlgorithmDecode(string source, string name, string destination)
+        {
+            if (radioButton1.Checked == true)
+            {
+                DecodeDT(source, name, destination);
+            }
+            else if (radioButton2.Checked == true)
+            {
+                DecodeBF(source, name, destination);
             }
         }
         public static bool IsFileReady(string filename)
@@ -41,31 +70,73 @@ namespace _17321_Zadatak1_ZI
                 return false;
             }
         }
-        private void Code(string source, string name, string destination)
+        private void CodeBF(string source, string name, string destination)
+        {
+            string file = File.ReadAllText(source);
+            byte[] hashValue=null;
+            SHA256 mySHA256 = SHA256.Create();
+            try
+            {
+                FileStream fileStream = File.Open(source, FileMode.Open, FileAccess.Read, FileShare.None);
+                fileStream.Position = 0;
+                hashValue = mySHA256.ComputeHash(fileStream);
+                fileStream.Close();
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine($"I/O Exception: {e.Message}");
+            }
+            if(mySHA256.HashSize>448)
+                System.Windows.Forms.MessageBox.Show("Maksimalna duzina kljuca je 56 bajta");
+            BlowFish bf = new BlowFish(hashValue);
+            string text=bf.Code(file);
+
+            string dest = destination + @"\" + name;
+            File.WriteAllText(dest, text);
+            string key = source  + " " + bf.ByteToHex(hashValue) + " " + dest + "\n";
+            string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysBF.txt";
+            File.AppendAllText(pathKey, key);
+        }
+        private void DecodeBF(string source, string name, string destination)
+        {
+            string file = File.ReadAllText(source);
+            string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysBF.txt";
+            string key = null ;
+            foreach (string line in File.ReadLines(pathKey))
+            {
+
+                if (line.EndsWith(source))
+                {
+                    string[] keys = line.Split(" ");
+                    key= keys[1];
+                }
+            }
+            BlowFish bf = new BlowFish(key);
+            string text = bf.Decode(file);
+            string dest = destination + @"\" + name;
+            File.WriteAllText(dest, text);
+        }
+        private void CodeDT(string source, string name, string destination)
         {
             string file = null;
-            while (!IsFileReady(source))
-            { }
             file = File.ReadAllText(source);
             string[] text = new string[3];
             Double_trasposition dt = new Double_trasposition(file);
             text = dt.Code(file);
 
-            deleteFromKeys(source); //ukoliko se kodira opet sta je kodirano/ postoji vrednost kljuceva za taj fajl
-                                    //obrisace se prethodne vrednosti
             string dest = destination + @"\" + name;
             File.WriteAllText(dest, text[0]);
             string key = source + " " + text[1] + " " + text[2] +" "+ dest + "\n";
-            string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\Keys.txt";
+            string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysDT.txt";
             File.AppendAllText(pathKey, key);
         }
-        private void Decode(string source, string name, string destination)
+        private void DecodeDT(string source, string name, string destination)
         {
             string text,keyM="",keyN="";
             string file = File.ReadAllText(source);
             Double_trasposition dt = new Double_trasposition(file);
             
-            string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\Keys.txt";
+            string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysDT.txt";
             foreach (string line in File.ReadLines(pathKey))
             {
 
@@ -129,7 +200,7 @@ namespace _17321_Zadatak1_ZI
                         return;
                     }
                     textBox2.Text = ofd.FileName;
-                    Decode(ofd.FileName, Path.GetFileName(ofd.FileName), textBox4.Text);
+                    SelectAlgorithmDecode(ofd.FileName, Path.GetFileName(ofd.FileName), textBox4.Text);
                 }
             }
         }
@@ -145,7 +216,11 @@ namespace _17321_Zadatak1_ZI
                         return;
                     }
                     textBox1.Text = ofd.FileName;
-                    Code(ofd.FileName, Path.GetFileName(ofd.FileName), textBox3.Text);
+                    deleteFromKeys(ofd.FileName); //ukoliko se kodira opet sta je kodirano/ postoji vrednost kljuceva za taj fajl
+                                                  //obrisace se prethodne vrednosti
+                                                  //Code(ofd.FileName, Path.GetFileName(ofd.FileName), textBox3.Text);
+
+                    SelectAlgorithm(ofd.FileName, Path.GetFileName(ofd.FileName), textBox3.Text);
                 }
             }
         }
@@ -162,24 +237,29 @@ namespace _17321_Zadatak1_ZI
         }
         private void deleteFromKeys(string FullPath)
         {
-            string pathKeys = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\Keys.txt";
+            string pathKeys;
+            if (radioButton1.Checked)
+                pathKeys = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysDT.txt";
+            else pathKeys = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysBF.txt";
             var tempFile = Path.GetTempFileName();
             var linesToKeep = File.ReadLines(pathKeys).Where(l => !l.StartsWith(FullPath));
-            if (linesToKeep != null)
-            {
-                File.WriteAllLines(tempFile, linesToKeep);
-                File.Delete(pathKeys);
-                File.Move(tempFile, pathKeys);
-            }
+            File.WriteAllLines(tempFile, linesToKeep);
+            File.Delete(pathKeys);
+            File.Move(tempFile, pathKeys);
         }
-        private void fileSystemWatcher1_Changed(object sender, FileSystemEventArgs e)
+      private void fileSystemWatcher1_Changed(object sender, FileSystemEventArgs e)
         {
             if (checkBox1.Checked)
             {
                 {
-                    deleteFromKeys(e.FullPath);
-                    string destination = textBox3.Text;
-                    Code(e.FullPath, e.Name, destination);
+                    if (!IsFileReady(e.FullPath))
+                    { }
+                    else
+                    {
+                        deleteFromKeys(e.FullPath);
+                        string destination = textBox3.Text;
+                        SelectAlgorithm(e.FullPath, e.Name, destination);
+                    }
                 }
             }
         }

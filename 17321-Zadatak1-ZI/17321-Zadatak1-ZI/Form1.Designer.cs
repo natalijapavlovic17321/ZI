@@ -46,12 +46,14 @@ namespace _17321_Zadatak1_ZI
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
+            this.radioButton1 = new System.Windows.Forms.RadioButton();
+            this.radioButton2 = new System.Windows.Forms.RadioButton();
             ((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).BeginInit();
             this.SuspendLayout();
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(181, 68);
+            this.button1.Location = new System.Drawing.Point(180, 93);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(94, 29);
             this.button1.TabIndex = 0;
@@ -81,7 +83,7 @@ namespace _17321_Zadatak1_ZI
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(366, 155);
+            this.button3.Location = new System.Drawing.Point(355, 169);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(94, 29);
             this.button3.TabIndex = 3;
@@ -91,7 +93,7 @@ namespace _17321_Zadatak1_ZI
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(220, 107);
+            this.textBox1.Location = new System.Drawing.Point(220, 132);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(502, 27);
@@ -107,17 +109,17 @@ namespace _17321_Zadatak1_ZI
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(220, 198);
+            this.textBox3.Location = new System.Drawing.Point(220, 209);
             this.textBox3.Name = "textBox3";
             this.textBox3.ReadOnly = true;
             this.textBox3.Size = new System.Drawing.Size(502, 27);
             this.textBox3.TabIndex = 6;
-            this.textBox3.Text = "C:\\Users\\Natalija\\Desktop\\17321-Zadatak1-ZI\\Kodirani";
+            this.textBox3.Text = "C:\\Users\\Natalija\\Desktop\\17321-Zadatak1-ZI\\KodiraniBF";
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(59, 72);
+            this.label1.Location = new System.Drawing.Point(59, 102);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(89, 20);
             this.label1.TabIndex = 7;
@@ -135,7 +137,7 @@ namespace _17321_Zadatak1_ZI
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(59, 159);
+            this.label3.Location = new System.Drawing.Point(59, 173);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(290, 20);
             this.label3.TabIndex = 9;
@@ -144,7 +146,7 @@ namespace _17321_Zadatak1_ZI
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(103, 32);
+            this.checkBox1.Location = new System.Drawing.Point(59, 12);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(215, 24);
             this.checkBox1.TabIndex = 10;
@@ -189,12 +191,12 @@ namespace _17321_Zadatak1_ZI
             this.textBox4.ReadOnly = true;
             this.textBox4.Size = new System.Drawing.Size(502, 27);
             this.textBox4.TabIndex = 14;
-            this.textBox4.Text = "C:\\Users\\Natalija\\Desktop\\17321-Zadatak1-ZI\\Dekodirani";
+            this.textBox4.Text = "C:\\Users\\Natalija\\Desktop\\17321-Zadatak1-ZI\\DekodiraniBF";
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(59, 109);
+            this.label6.Location = new System.Drawing.Point(59, 139);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(138, 20);
             this.label6.TabIndex = 15;
@@ -209,6 +211,28 @@ namespace _17321_Zadatak1_ZI
             this.label7.TabIndex = 16;
             this.label7.Text = "Poslednje dekodirano:";
             // 
+            // radioButton1
+            // 
+            this.radioButton1.AutoSize = true;
+            this.radioButton1.Location = new System.Drawing.Point(76, 54);
+            this.radioButton1.Name = "radioButton1";
+            this.radioButton1.Size = new System.Drawing.Size(160, 24);
+            this.radioButton1.TabIndex = 18;
+            this.radioButton1.Text = "Double transpositin";
+            this.radioButton1.UseVisualStyleBackColor = true;
+            // 
+            // radioButton2
+            // 
+            this.radioButton2.AutoSize = true;
+            this.radioButton2.Checked = true;
+            this.radioButton2.Location = new System.Drawing.Point(288, 54);
+            this.radioButton2.Name = "radioButton2";
+            this.radioButton2.Size = new System.Drawing.Size(88, 24);
+            this.radioButton2.TabIndex = 19;
+            this.radioButton2.TabStop = true;
+            this.radioButton2.Text = "BlowFish";
+            this.radioButton2.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -216,6 +240,8 @@ namespace _17321_Zadatak1_ZI
             this.BackColor = System.Drawing.SystemColors.Info;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(800, 451);
+            this.Controls.Add(this.radioButton2);
+            this.Controls.Add(this.radioButton1);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.textBox4);
@@ -261,6 +287,8 @@ namespace _17321_Zadatak1_ZI
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.RadioButton radioButton2;
+        private System.Windows.Forms.RadioButton radioButton1;
     }
 }
 

@@ -1,1 +1,6 @@
 To decrypt a double transposition, construct a block with the right number of rows under the keyword, 
+blocking off the short columns. Write the cipher in by columns, and read it out by rows. Lather, rinse, repeat
+To decrypt a double transposition, construct a block with the right number of rows under the keyword, 
+blocking off the short columns. Write the cipher in by columns, and read it out by rows. Lather, rinse, repeat
+To decrypt a double transposition, construct a block with the right number of rows under the keyword, 
+blocking off the short columns. Write the cipher in by columns, and read it out by rows. Lather, rinse, repeat

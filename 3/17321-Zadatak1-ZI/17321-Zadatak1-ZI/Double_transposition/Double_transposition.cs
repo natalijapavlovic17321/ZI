@@ -11,7 +11,7 @@ namespace Double_trasposition2
     {
         #region Variables
         private byte[] InitVector;
-        public bool IVSet;
+        private bool IVSet;
         public byte[] IV
         {
             get { return InitVector; }
@@ -107,6 +107,15 @@ namespace Double_trasposition2
                 this.permN += i.ToString() + ",";
             this.permN += (this.n - 1).ToString();
         }
+        public byte[] SetIV()
+        {
+            InitVector = new byte[8];
+            RNGCryptoServiceProvider randomSource = new RNGCryptoServiceProvider();
+            randomSource.GetBytes(InitVector);
+            IVSet = true;
+            //this.IV = InitVector;
+            return InitVector;
+        }
         public string[] Shuffle(string key)
         {
             //shuffle permM i permN da bi se dobile nasumicne vrednosti kljuceva
@@ -120,30 +129,6 @@ namespace Double_trasposition2
                 keys[next] = pom;
             }
             return keys;
-        }
-        public byte[] SetIV()
-        {
-            InitVector = new byte[8];
-            RNGCryptoServiceProvider randomSource = new RNGCryptoServiceProvider();
-            randomSource.GetBytes(InitVector);
-            //InitVector = HexToByte("1234578912345614");
-            IVSet = true;
-            setMN(InitVector);
-            //this.IV = InitVector;
-            return InitVector;
-        }
-        public void setMN(byte[] iv)
-        {
-            //string text = Encoding.Default.GetString(iv);
-            this.length = iv.Length;
-            double root = Math.Sqrt(length);
-            this.m = this.n = (int)root;
-            if (root % 1 != 0)  //matrica za shuffle IV
-            {
-                this.n++;
-                if (this.n * this.m < this.length)
-                    this.m++;
-            }
         }
         #endregion Init
 
@@ -256,121 +241,18 @@ namespace Double_trasposition2
             }
             return output;
         }
-        public string[] CodeOFB(string text1)
+        public string[] CodeOFB(string text)
         {
-            this.IV=SetIV();  //postavljanje IV i matrice za IV
-            this.InitShuffle();  //shuffle vrsta i kolona
-            string[] keyM = this.Shuffle(this.permM); //odvajanje 
-            string[] keyN = this.Shuffle(this.permN); //odvajanje
-
-            //byte[] text = Convert.FromBase64String(text1);
-            byte[] text= Encoding.ASCII.GetBytes(text1);
-            int len = (text.Length % 8 == 0 ? text.Length : text.Length + 8 - (text.Length % 8)); //  po 64 bitova 
-            byte[] plainText = new byte[len];
-            Buffer.BlockCopy(text, 0, plainText, 0, text.Length);
-            byte[] Pj = new byte[8];
-            //byte[] Cj = new byte[8];
-            byte[] Ij = new byte[8];
-            Buffer.BlockCopy(IV, 0, Ij, 0, 8); //I0=IV
-            for (int i = 0; i < plainText.Length; i += 8)
-            {
-                Buffer.BlockCopy(plainText, i, Pj, 0, 8); //kopiranje u Pj
-
-                BlockEncrypt(ref Ij, keyM , keyN); //Oj=Ek(Ij) se nalazi u Ij
-                                      //u sledecem krugu ce Ij imati vrednosti Oj-1
-                XorBlock(ref Pj, Ij); //Pj xor Oj = Cj
-                                      //Buffer.BlockCopy(Pj, 0, Cj, 0, 8); //prebacivanje u Cj
-
-                Buffer.BlockCopy(Pj, 0, plainText, i, 8);
-            }
-            //string outputText = Encoding.ASCII.GetString(plainText);
-            string outputText = ByteToHex(plainText);
-            //string outputText = Convert.ToString(plainText);
-            this.permN = this.permM = "";
-            for (int i = 0; i < this.m - 1; i++)
-                this.permM += keyM[i] + ",";
-            this.permM += keyM[this.m - 1];
-            for (int i = 0; i < this.n - 1; i++)
-                permN += keyN[i] + ",";
-            this.permN += keyN[this.n - 1];
-            string[] output = new string[3];
-            output[0] = outputText;
-            output[1] = this.permM;
-            output[2] = this.permN;
-            return output;
+            this.IV=SetIV();
+            return null;
         }
-        public string DecodeOFB(string text1, string kM, string kN)
+        public string DecodeOFB(string text, string keyN, string keyM)
         {
             if (!IVSet)
             {
                 throw new Exception("IV not set.");
             }
-            setMN(this.IV);
-            string[] keyM = kM.Split(',');
-            string[] keyN = kN.Split(',');
-            //byte[] text = Encoding.ASCII.GetBytes(text1); //text u bajtovima
-            //byte[] text = Convert.FromBase64String(text1); 
-            byte[] text=HexToByte(text1);
-            int len = (text.Length % 8 == 0 ? text.Length : text.Length + 8 - (text.Length % 8)); //  po 64 bitova 
-            byte[] plainText = new byte[len];
-            Buffer.BlockCopy(text, 0, plainText, 0, len);
-            byte[] Pj = new byte[8];
-            //byte[] Cj = new byte[8];
-            byte[] Ij = new byte[8];
-            Buffer.BlockCopy(IV, 0, Ij, 0, 8); //I0=IV
-            for (int i = 0; i < plainText.Length; i += 8)
-            {
-                Buffer.BlockCopy(plainText, i, Pj, 0, 8); //kopiranje u Pj
-
-                BlockEncrypt(ref Ij,keyM,keyN); //Oj=Ek(Ij) se nalazi u Ij
-                                      //u sledecem krugu ce Ij imati vrednosti Oj-1
-                XorBlock(ref Pj, Ij); //Pj xor Oj = Cj
-                                      //Buffer.BlockCopy(Pj, 0, Cj, 0, 8); //prebacivanje u Cj
-
-                Buffer.BlockCopy(Pj, 0, plainText, i, 8);
-            }
-            return Encoding.ASCII.GetString(plainText); 
-           // return ByteToHex(plainText); 
-        }
-        public void BlockEncrypt(ref byte[] block, string[] keyM, string[] keyN)
-        {
-            byte[,] matrix = new byte[this.m, this.n];
-            for (int i = 0; i < this.m; i++)
-            {
-                for (int j = 0; j < this.n; j++)
-                {
-                    if (i * n + j < block.Length)
-                        matrix[i, j] = block[i * n + j];
-                }
-            }
-            byte[,] transpositionN = new byte[this.m, this.n];
-            for (int i = 0; i < keyN.Length; i++)
-            {
-                int k = System.Convert.ToInt32(keyN[i]);
-                for (int j = 0; j < this.m; j++)
-                {
-                    transpositionN[j, k] = matrix[j, i];
-                }
-            }
-            byte[,] transpositionM = new byte[this.m, this.n];
-            for (int i = 0; i < keyM.Length; i++)
-            {
-                int k = System.Convert.ToInt32(keyM[i]);
-                for (int j = 0; j < this.n; j++)
-                {
-                    transpositionM[k, j] = transpositionN[i, j];
-                }
-            }
-            byte[] b = new byte[block.Length];
-            for (int i = 0; i < this.m; i++)
-            {
-                for (int j = 0; j < this.n; j++)
-                {
-                    if (i * n + j < block.Length)
-                       b[i * n + j] = transpositionM[i, j];
-                }
-            }
-            Buffer.BlockCopy(b, 0, block, 0, block.Length);
+            return null;
         }
         #endregion Code/Decode
 

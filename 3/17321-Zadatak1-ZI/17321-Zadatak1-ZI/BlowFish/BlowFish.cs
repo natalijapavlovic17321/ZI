@@ -9,6 +9,7 @@ namespace _17321_Zadatak1_ZI.BlowFish2
 {
     class BlowFish
     {
+        #region Variables
         //16 iterations
         const int ROUNDS = 16;
         //S Blocks
@@ -23,6 +24,28 @@ namespace _17321_Zadatak1_ZI.BlowFish2
         private uint xl;
         private uint xr;
 
+        private byte[] InitVector;
+        public bool IVSet;
+
+        public byte[] IV
+        {
+            get { return InitVector; }
+            set
+            {
+                if (value.Length == 8)
+                {
+                    InitVector = value;
+                    IVSet = true;
+                }
+                else
+                {
+                    throw new Exception("Invalid IV size.");
+                }
+            }
+        }
+        #endregion Variables
+
+        #region Contructors
         public BlowFish() { }
         public BlowFish(string key)
         { 
@@ -32,6 +55,18 @@ namespace _17321_Zadatak1_ZI.BlowFish2
         {
             SetKey(key);
         }
+        public BlowFish(string key, string iv)
+        {
+            SetKey(HexToByte(key));
+            IV = HexToByte(iv);
+        }
+        public BlowFish(byte[] key, string iv)
+        {
+            SetKey(key);
+            IV = HexToByte(iv);
+        }
+        #endregion Constructors
+
         #region Key
         private void SetKey(byte[] cipherKey)
         {
@@ -96,6 +131,17 @@ namespace _17321_Zadatak1_ZI.BlowFish2
         {
             return Encoding.ASCII.GetString(Decryption(HexToByte(text))).Replace("\0", "");
         }
+        public string CodeOFB(string text)
+        {
+            if (!IVSet)
+                this.IV=SetIV();
+            return ByteToHex(EncryptionOFB(Encoding.ASCII.GetBytes(text)));
+        }
+        public string DecodeOFB(string text)
+        {
+            //procitaj IV   IV = HexToByte(ct.Substring(0, 16));
+            return Encoding.ASCII.GetString(DecryptionOFB(HexToByte(text))).Replace("\0", "");
+        }
         public byte[] Encryption(byte[] text)
         {
             return Crypt(text, false);
@@ -104,15 +150,66 @@ namespace _17321_Zadatak1_ZI.BlowFish2
         {
             return Crypt(text, true);
         }
+        public byte[] EncryptionOFB(byte[] text)
+        {
+            return CryptOFB(text, false);
+        }
+        public byte[] DecryptionOFB(byte[] text)
+        {
+            return CryptOFB(text, true);
+        }
+        private byte[] CryptOFB(byte[] text, bool decrypt)
+        {
+            if (!IVSet)
+            {
+                throw new Exception("IV not set.");
+            }
+            int len = (text.Length % 8 == 0 ? text.Length : text.Length + 8 - (text.Length % 8)); //  po 64 bitova 
+            byte[] plainText = new byte[len];
+            Buffer.BlockCopy(text, 0, plainText, 0, text.Length);
+            byte[] Pj = new byte[8];
+            //byte[] Cj = new byte[8];
+            byte[] Ij = new byte[8];
+            Buffer.BlockCopy(IV, 0, Ij, 0, 8); //I0=IV
+            if (!decrypt)
+            {
+                for (int i = 0; i < plainText.Length; i += 8)
+                {
+                    Buffer.BlockCopy(plainText, i, Pj, 0, 8); //kopiranje u Pj
+                    
+                    BlockEncrypt(ref Ij); //Oj=Ek(Ij) se nalazi u Ij
+                                          //u sledecem krugu ce Ij imati vrednosti Oj-1
+                    XorBlock(ref Pj, Ij); //Pj xor Oj = Cj
+                    //Buffer.BlockCopy(Pj, 0, Cj, 0, 8); //prebacivanje u Cj
+
+                    Buffer.BlockCopy(Pj, 0, plainText, i, 8);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < plainText.Length; i += 8)
+                {
+                    Buffer.BlockCopy(plainText, i, Pj, 0, 8); //kopiranje u Pj
+
+                    BlockEncrypt(ref Ij); //Oj=Ek(Ij) se nalazi u Ij
+                                          //mozda treba decrypt al nzm pise na wiki Ek
+                    XorBlock(ref Pj, Ij); //Pj xor Oj = Cj
+                    //Buffer.BlockCopy(Pj, 0, Cj, 0, 8); //prebacivanje u Cj
+
+                    Buffer.BlockCopy(Pj, 0, plainText, i, 8);
+                }
+            }
+            return plainText;
+        }
         private byte[] Crypt(byte[] text, bool decrypt)
         {
             int len = (text.Length % 8 == 0 ? text.Length : text.Length + 8 - (text.Length % 8)); //  po 64 bitova 
             byte[] changedText = new byte[len];
-            changedText = text;
+            Buffer.BlockCopy(text, 0, changedText, 0, text.Length);
             byte[] block = new byte[8];
             for (int i = 0; i < changedText.Length; i += 8)
             {
-                block = changedText;
+                Buffer.BlockCopy(changedText, i, block, 0, 8);
                 if (decrypt)
                 {
                     BlockDecrypt(ref block);
@@ -121,7 +218,7 @@ namespace _17321_Zadatak1_ZI.BlowFish2
                 {
                     BlockEncrypt(ref block);
                 }
-                changedText = block;
+                Buffer.BlockCopy(block, 0, changedText, i, 8);
             }
             return changedText;
         }
@@ -224,9 +321,26 @@ namespace _17321_Zadatak1_ZI.BlowFish2
             //uint x2 = x1 + (s3[this.GetByte3(b)] % mod);
             //return x2;
         }
+
+        private void XorBlock(ref byte[] block, byte[] iv)
+        {
+            for (int i = 0; i < block.Length; i++)
+            {
+                block[i] ^= iv[i];
+            }
+        }
         #endregion Encryption/Decryption
 
         #region Set
+        public byte[] SetIV()
+        {
+            InitVector = new byte[8];
+            RNGCryptoServiceProvider randomSource = new RNGCryptoServiceProvider();
+            randomSource.GetBytes(InitVector);
+            IVSet = true;
+            //this.IV = InitVector;
+            return InitVector;
+        }
 
         private uint[] SetP()  //setovanje P niza na pocetne vrednosti
         {
@@ -438,7 +552,7 @@ namespace _17321_Zadatak1_ZI.BlowFish2
         #endregion Get
 
         #region Conversions
-        private byte[] HexToByte(string hex)
+        public byte[] HexToByte(string hex)
         {
             byte[] b = new byte[hex.Length / 2];
             for (int i = 0; i < hex.Length - 1; i += 2)

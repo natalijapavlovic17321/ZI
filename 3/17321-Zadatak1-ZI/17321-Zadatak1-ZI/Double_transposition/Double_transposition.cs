@@ -3,11 +3,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace Double_trasposition2
 {
     public class Double_trasposition
     {
+        #region Variables
+        private byte[] InitVector;
+        private bool IVSet;
+        public byte[] IV
+        {
+            get { return InitVector; }
+            set
+            {
+                if (value.Length == 8)
+                {
+                    InitVector = value;
+                    IVSet = true;
+                }
+                else
+                {
+                    throw new Exception("Invalid IV size.");
+                }
+            }
+        }
         private int length;
         public int Length
         {
@@ -38,6 +58,9 @@ namespace Double_trasposition2
             get { return n; }
             set { n = value; }
         }
+        #endregion Variables
+
+        #region Constructors
         public Double_trasposition() { }
         public Double_trasposition(string text)
         {    
@@ -54,6 +77,25 @@ namespace Double_trasposition2
                     this.m++;
             }
         }
+        public Double_trasposition(string text, string iv)
+        {
+            // inicijalizacija matrice, M, N
+            this.length = text.Length;
+            double root = Math.Sqrt(length);
+            this.m = this.n = (int)root;
+            if (root % 1 != 0)   //root nije ceo broj
+            {
+                this.n++;   //potrebna jos jedna vrsta
+                // if (root < System.Convert.ToInt32(root))    //drugi nacin
+                //   this.m++;
+                if (this.n * this.m < this.length)   //potrebna jos jedna kolona
+                    this.m++;
+            }
+            IV = HexToByte(iv);
+        }
+        #endregion Constructors
+
+        #region Init 
         public void InitShuffle()
         {
             //inicijalizacija pemrM i permN kao 1,2,3,4....
@@ -64,6 +106,15 @@ namespace Double_trasposition2
             for (int i = 0; i < this.n - 1; i++)
                 this.permN += i.ToString() + ",";
             this.permN += (this.n - 1).ToString();
+        }
+        public byte[] SetIV()
+        {
+            InitVector = new byte[8];
+            RNGCryptoServiceProvider randomSource = new RNGCryptoServiceProvider();
+            randomSource.GetBytes(InitVector);
+            IVSet = true;
+            //this.IV = InitVector;
+            return InitVector;
         }
         public string[] Shuffle(string key)
         {
@@ -79,6 +130,9 @@ namespace Double_trasposition2
             }
             return keys;
         }
+        #endregion Init
+
+        #region Code/Decode
         public string[] Code(string text)
         {
             //pripremanje kljuceva i texta
@@ -187,5 +241,60 @@ namespace Double_trasposition2
             }
             return output;
         }
+        public string[] CodeOFB(string text)
+        {
+            this.IV=SetIV();
+            return null;
+        }
+        public string DecodeOFB(string text, string keyN, string keyM)
+        {
+            if (!IVSet)
+            {
+                throw new Exception("IV not set.");
+            }
+            return null;
+        }
+        #endregion Code/Decode
+
+        #region Functions
+        private void XorBlock(ref byte[] block, byte[] iv)
+        {
+            for (int i = 0; i < block.Length; i++)
+            {
+                block[i] ^= iv[i];
+            }
+        }
+        #endregion Functions
+
+        #region Conversions
+        public byte[] HexToByte(string hex)
+        {
+            byte[] b = new byte[hex.Length / 2];
+            for (int i = 0; i < hex.Length - 1; i += 2)
+            {
+                byte x = Hex(hex[i]);
+                byte y = Hex(hex[i + 1]);
+                b[i / 2] = (byte)(x * 16 + y);
+            }
+            return b;
+        }
+        private byte Hex(char x)
+        {
+            if (x <= '9' && x >= '0')
+            { return (byte)(x - '0'); }
+            else if (x <= 'z' && x >= 'a')
+            { return (byte)(x - 'a' + 10); }
+            else if (x <= 'Z' && x >= 'A')
+            { return (byte)(x - 'A' + 10); }
+            return 0;
+        }
+        public string ByteToHex(byte[] bytes)
+        {
+            StringBuilder str = new StringBuilder();
+            foreach (byte b in bytes)
+                str.Append(b.ToString("x2"));
+            return str.ToString();
+        }
+        #endregion Conversions
     }
 }

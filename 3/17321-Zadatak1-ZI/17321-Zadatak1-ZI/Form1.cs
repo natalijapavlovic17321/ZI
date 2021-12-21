@@ -33,8 +33,8 @@ namespace _17321_Zadatak1_ZI
                         string destination = textBox3.Text;
                         SelectAlgorithm(e.FullPath, e.Name, destination);
                     }
-                    }
                 }
+            }
         }
         public void SelectAlgorithm(string source, string name, string destination)
         {
@@ -87,10 +87,18 @@ namespace _17321_Zadatak1_ZI
             {
                 System.Windows.Forms.MessageBox.Show(e.Message);
             }
-            if(mySHA256.HashSize>448)
+            if (mySHA256.HashSize > 448)
                 System.Windows.Forms.MessageBox.Show("Maksimalna duzina kljuca je 56 bajta");
+
             BlowFish bf = new BlowFish(hashValue);
-            string text=bf.Code(file);
+            string text, mode="" ;
+            if (checkBox2.Checked == true) //biranje moda
+            {
+                text = bf.CodeOFB(file);
+                if(bf.IVSet)
+                   mode = bf.ByteToHex(bf.IV); //vrednost IV
+            }
+            else text = bf.Code(file);
 
             Md5 MD5 = new Md5();
             string hashCode = MD5.GetHash(file); //hash
@@ -100,7 +108,10 @@ namespace _17321_Zadatak1_ZI
 
             string dest = destination + @"\" + name;
             File.WriteAllText(dest, write);
-            string key = source  + " " + bf.ByteToHex(hashValue) + " " + dest + "\n";
+            string key;
+            if (mode=="")
+                key = source  + " " + bf.ByteToHex(hashValue) + " " + dest + "\n";
+            else key = source + " " + bf.ByteToHex(hashValue) + " " + mode + " " + dest + "\n";
             string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysBF.txt";
             File.AppendAllText(pathKey, key);
         }
@@ -108,19 +119,11 @@ namespace _17321_Zadatak1_ZI
         {
             try
             {
-                //string file = File.ReadAllText(source);
-                //string hash1 = File.ReadLines(source).First(); // hash
-
-                string[] lines = File.ReadAllLines(source);
-                string textDecode = "";
-                for (int i = 1; i < lines.Length; i++)
-                {
-                    textDecode += lines[i]; //sve ostale linije sem hash-a
-                }
-                string hash1 = lines[0]; //hash
+                string hash1 = File.ReadLines(source).First(); // hash
+                string textDecode = File.ReadAllText(source).Remove(0, hash1.Length + 1);
 
                 string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysBF.txt";
-                string key = null;
+                string key = null,mode=null;
                 foreach (string line in File.ReadLines(pathKey))
                 {
 
@@ -128,10 +131,24 @@ namespace _17321_Zadatak1_ZI
                     {
                         string[] keys = line.Split(" ");
                         key = keys[1];
+                        if (checkBox2.Checked && !keys[2].Contains(@":\")) // u fajlu se posle kljuca nalazi IV
+                            mode = keys[2];
+                        else // u fajlu se posle kljuca nalazi putanja destination
+                        {
+                            MessageBox.Show("Encrypted file doesnt use OFC mode. Please turn it off.");
+                            return;
+                        }
                     }
                 }
-                BlowFish bf = new BlowFish(key);
-                string text = bf.Decode(textDecode);
+
+                BlowFish bf = new BlowFish(key); 
+                string text;
+                if (checkBox2.Checked)
+                {
+                    bf.IV = bf.HexToByte(mode);
+                    text = bf.DecodeOFB(textDecode);
+                }
+                else text = bf.Decode(textDecode);
 
                 Md5 MD5 = new Md5();
                 string hash2 = MD5.GetHash(text); //hash dekodiranog teksta
@@ -156,8 +173,11 @@ namespace _17321_Zadatak1_ZI
             string file = null;
             file = File.ReadAllText(source);
             string[] text = new string[3];
+
             Double_trasposition dt = new Double_trasposition(file);
-            text = dt.Code(file); //kodirani tekst
+            if (checkBox2.Checked == true) //biranje moda
+                text = dt.CodeOFB(file); //kodirani tekst
+            else text = dt.Code(file);
 
             Md5 MD5 = new Md5();
             string hashCode=MD5.GetHash(file); //hash
@@ -175,16 +195,8 @@ namespace _17321_Zadatak1_ZI
         {
             try
             {
-                //string file = File.ReadAllText(source);
-                //string hash1 = File.ReadLines(source).First(); // hash
-
-                string[] lines = File.ReadAllLines(source);
-                string textDecode = "";
-                for (int i = 1; i < lines.Length; i++)
-                {
-                    textDecode = textDecode + lines[i]; //sve ostale linije sem hash-a
-                }
-                string hash1 = lines[0]; //hash
+                string hash1 = File.ReadLines(source).First(); // hash
+                string textDecode = File.ReadAllText(source).Remove(0, hash1.Length + 1);
 
                 string text, keyM = "", keyN = "";
                 Double_trasposition dt = new Double_trasposition(textDecode);
@@ -200,7 +212,10 @@ namespace _17321_Zadatak1_ZI
                         keyN = keys[2];
                     }
                 }
-                text = dt.Decode(textDecode, keyM, keyN);
+
+                if(checkBox2.Checked) //biranje moda
+                    text = dt.DecodeOFB(textDecode, keyM, keyN);
+                else text = dt.Decode(textDecode, keyM, keyN);
 
                 Md5 MD5 = new Md5();
                 string hash2 = MD5.GetHash(text); //hash dekodiranog teksta
@@ -216,7 +231,7 @@ namespace _17321_Zadatak1_ZI
             }
             catch (Exception e)
             {
-                MessageBox.Show("Try different encryption/decryption algorythm. \n" +
+                MessageBox.Show("Try different encryption/decryption algorythm OR Try different mode.\n" +
                     "Error: " + e + "\n" );
             }
         }

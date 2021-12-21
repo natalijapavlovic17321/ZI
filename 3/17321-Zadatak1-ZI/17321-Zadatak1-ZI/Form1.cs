@@ -135,7 +135,9 @@ namespace _17321_Zadatak1_ZI
                             mode = keys[2];
                         else // u fajlu se posle kljuca nalazi putanja destination
                         {
-                            MessageBox.Show("Encrypted file doesnt use OFC mode. Please turn it off.");
+                            if(checkBox2.Checked)
+                                MessageBox.Show("Encrypted file doesnt use OFB mode. Please turn it off.");
+                            else MessageBox.Show("Encrypted file use OFB mode. Please turn it on.");
                             return;
                         }
                     }
@@ -173,10 +175,14 @@ namespace _17321_Zadatak1_ZI
             string file = null;
             file = File.ReadAllText(source);
             string[] text = new string[3];
-
-            Double_trasposition dt = new Double_trasposition(file);
+            string mode = "";
+            Double_trasposition dt = new Double_trasposition();
             if (checkBox2.Checked == true) //biranje moda
+            {
                 text = dt.CodeOFB(file); //kodirani tekst
+                if (dt.IVSet)
+                    mode = dt.ByteToHex(dt.IV); //vrednost IV
+            }
             else text = dt.Code(file);
 
             Md5 MD5 = new Md5();
@@ -187,7 +193,10 @@ namespace _17321_Zadatak1_ZI
 
             string dest = destination + @"\" + name;
             File.WriteAllText(dest, write);
-            string key = source + " " + text[1] + " " + text[2] +" "+ dest + "\n";
+            string key;
+            if (mode == "")
+                key = source + " " + text[1] + " " + text[2] +" "+ dest + "\n";
+            else key = source + " " + text[1] + " " + text[2] + " " + mode + " " + dest + "\n";
             string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysDT.txt";
             File.AppendAllText(pathKey, key);
         }
@@ -198,8 +207,8 @@ namespace _17321_Zadatak1_ZI
                 string hash1 = File.ReadLines(source).First(); // hash
                 string textDecode = File.ReadAllText(source).Remove(0, hash1.Length + 1);
 
-                string text, keyM = "", keyN = "";
-                Double_trasposition dt = new Double_trasposition(textDecode);
+                string text, keyM = "", keyN = "",mode="";
+                Double_trasposition dt = new Double_trasposition();
 
                 string pathKey = @"C:\Users\Natalija\Desktop\17321-Zadatak1-ZI\KeysDT.txt";
                 foreach (string line in File.ReadLines(pathKey))
@@ -210,13 +219,25 @@ namespace _17321_Zadatak1_ZI
                         string[] keys = line.Split(" ");
                         keyM = keys[1];
                         keyN = keys[2];
+                        if (checkBox2.Checked && !keys[3].Contains(@":\")) // u fajlu se posle kljuca nalazi IV
+                            mode = keys[3];
+                        else // u fajlu se posle kljuca nalazi putanja destination
+                        {
+                            if (checkBox2.Checked)
+                                MessageBox.Show("Encrypted file doesnt use OFB mode. Please turn it off.");
+                            else MessageBox.Show("Encrypted file use OFB mode. Please turn it on.");
+                            return;
+                        }
                     }
                 }
 
-                if(checkBox2.Checked) //biranje moda
+                if (checkBox2.Checked) //biranje moda
+                {
+                    dt.IV = dt.HexToByte(mode);
                     text = dt.DecodeOFB(textDecode, keyM, keyN);
+                }
                 else text = dt.Decode(textDecode, keyM, keyN);
-
+                MessageBox.Show(text);
                 Md5 MD5 = new Md5();
                 string hash2 = MD5.GetHash(text); //hash dekodiranog teksta
 

@@ -217,9 +217,9 @@ namespace _17321_Zadatak1_ZI
             this.radioButton1.AutoSize = true;
             this.radioButton1.Location = new System.Drawing.Point(76, 54);
             this.radioButton1.Name = "radioButton1";
-            this.radioButton1.Size = new System.Drawing.Size(160, 24);
+            this.radioButton1.Size = new System.Drawing.Size(169, 24);
             this.radioButton1.TabIndex = 18;
-            this.radioButton1.Text = "Double transpositin";
+            this.radioButton1.Text = "Double transposition";
             this.radioButton1.UseVisualStyleBackColor = true;
             // 
             // radioButton2

@@ -1,0 +1,8 @@
+# ZI
+Projekti zastite informacija
+Encrytion/Decryption
+DOUBLE TRANSPOSITION
+BLOW FISH
+OFB MODE
+MD5 HASH
+FILE SYSTEM WATCHER
